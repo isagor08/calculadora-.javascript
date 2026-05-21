@@ -1,0 +1,473 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Calculadora JavaScript</title>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      font-family: 'Segoe UI', system-ui, sans-serif;
+      background: #e8eef4;
+      min-height: 100vh;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      padding: 2rem 1rem;
+    }
+
+    .container {
+      width: 100%;
+      max-width: 420px;
+    }
+
+    h1 {
+      text-align: center;
+      font-size: 13px;
+      font-weight: 500;
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      color: #6b7280;
+      margin-bottom: 1rem;
+    }
+
+    .calc-card {
+      background: #ffffff;
+      border-radius: 16px;
+      overflow: hidden;
+      box-shadow: 0 4px 24px rgba(0,0,0,0.10);
+    }
+
+    /* ── Display ── */
+    .display {
+      background: #1e293b;
+      padding: 1.5rem 1.25rem 1rem;
+    }
+    .display-expr {
+      font-size: 12px;
+      color: #64748b;
+      min-height: 18px;
+      text-align: right;
+      margin-bottom: 6px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+    .display-val {
+      font-size: 36px;
+      font-weight: 300;
+      color: #f1f5f9;
+      text-align: right;
+      min-height: 44px;
+      overflow: hidden;
+      white-space: nowrap;
+      text-overflow: ellipsis;
+    }
+
+    /* ── Mode tabs ── */
+    .mode-tabs {
+      display: flex;
+      background: #f8fafc;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    .mode-tab {
+      flex: 1;
+      padding: 10px 8px;
+      font-size: 12px;
+      font-family: inherit;
+      background: none;
+      border: none;
+      border-right: 1px solid #e2e8f0;
+      color: #94a3b8;
+      cursor: pointer;
+      transition: background 0.15s, color 0.15s;
+      font-weight: 500;
+    }
+    .mode-tab:last-child { border-right: none; }
+    .mode-tab.active {
+      background: #dbeafe;
+      color: #1d4ed8;
+    }
+    .mode-tab:hover:not(.active) { background: #f1f5f9; color: #475569; }
+
+    /* ── Button grid ── */
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+    }
+    .btn-grid button {
+      border: none;
+      border-right: 1px solid #f1f5f9;
+      border-bottom: 1px solid #f1f5f9;
+      padding: 18px 8px;
+      font-size: 16px;
+      font-family: inherit;
+      cursor: pointer;
+      background: #ffffff;
+      color: #1e293b;
+      transition: background 0.1s, transform 0.08s;
+    }
+    .btn-grid button:nth-child(4n) { border-right: none; }
+    .btn-grid button:hover { background: #f8fafc; }
+    .btn-grid button:active { background: #f1f5f9; transform: scale(0.96); }
+
+    .btn-op   { color: #2563eb; font-weight: 500; }
+    .btn-eq   { background: #2563eb !important; color: #ffffff !important; font-weight: 600; }
+    .btn-eq:hover { background: #1d4ed8 !important; }
+    .btn-clear { color: #dc2626; font-weight: 500; }
+    .btn-fn   { color: #059669; font-size: 13px !important; }
+
+    /* ── Complex panel ── */
+    .complex-panel {
+      padding: 1.25rem;
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+    .complex-panel h2 {
+      font-size: 11px;
+      font-weight: 600;
+      letter-spacing: 0.06em;
+      text-transform: uppercase;
+      color: #94a3b8;
+      margin-bottom: 0;
+    }
+
+    .op-block {
+      background: #f8fafc;
+      border: 1px solid #e2e8f0;
+      border-radius: 12px;
+      padding: 1rem;
+    }
+    .op-block h3 {
+      font-size: 13px;
+      font-weight: 600;
+      color: #1e293b;
+      margin-bottom: 10px;
+    }
+    .op-block p.desc {
+      font-size: 11px;
+      color: #94a3b8;
+      margin-bottom: 10px;
+      font-style: italic;
+    }
+    .op-row {
+      display: flex;
+      gap: 8px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    .op-row input {
+      flex: 1;
+      min-width: 70px;
+      font-size: 13px;
+      font-family: inherit;
+      padding: 7px 10px;
+      border: 1px solid #e2e8f0;
+      border-radius: 8px;
+      background: #ffffff;
+      color: #1e293b;
+    }
+    .op-row input:focus { outline: 2px solid #93c5fd; border-color: #3b82f6; }
+    .op-row button {
+      font-size: 12px;
+      font-family: inherit;
+      padding: 7px 14px;
+      background: #1e293b;
+      color: #f8fafc;
+      border: none;
+      border-radius: 8px;
+      cursor: pointer;
+      white-space: nowrap;
+      font-weight: 500;
+      transition: background 0.15s;
+    }
+    .op-row button:hover { background: #334155; }
+
+    .result {
+      margin-top: 8px;
+      font-size: 13px;
+      font-weight: 600;
+      color: #059669;
+      min-height: 20px;
+    }
+    .result.error { color: #dc2626; }
+
+    .hidden { display: none; }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Calculadora JavaScript</h1>
+  <div class="calc-card">
+
+    <!-- Display -->
+    <div class="display">
+      <div class="display-expr" id="expr"></div>
+      <div class="display-val" id="disp">0</div>
+    </div>
+
+    <!-- Tabs -->
+    <div class="mode-tabs">
+      <button class="mode-tab active" onclick="setMode('basic')">Básica</button>
+      <button class="mode-tab" onclick="setMode('complex')">Operaciones complejas</button>
+    </div>
+
+    <!-- Basic panel -->
+    <div id="basic-panel">
+      <div class="btn-grid">
+        <button class="btn-clear" onclick="clearAll()">AC</button>
+        <button class="btn-fn"    onclick="toggleSign()">+/−</button>
+        <button class="btn-fn"    onclick="percent()">%</button>
+        <button class="btn-op"   onclick="setOp('/')">÷</button>
+
+        <button onclick="digit('7')">7</button>
+        <button onclick="digit('8')">8</button>
+        <button onclick="digit('9')">9</button>
+        <button class="btn-op" onclick="setOp('*')">×</button>
+
+        <button onclick="digit('4')">4</button>
+        <button onclick="digit('5')">5</button>
+        <button onclick="digit('6')">6</button>
+        <button class="btn-op" onclick="setOp('-')">−</button>
+
+        <button onclick="digit('1')">1</button>
+        <button onclick="digit('2')">2</button>
+        <button onclick="digit('3')">3</button>
+        <button class="btn-op" onclick="setOp('+')">+</button>
+
+        <button onclick="digit('0')" style="grid-column: span 2; text-align: left; padding-left: 28px;">0</button>
+        <button onclick="dot()">.</button>
+        <button class="btn-eq" onclick="calculate()">=</button>
+      </div>
+    </div>
+
+    <!-- Complex panel -->
+    <div id="complex-panel" class="complex-panel hidden">
+      <h2>Operaciones complejas</h2>
+
+      <!-- 1. Factorial -->
+      <div class="op-block">
+        <h3>1. Factorial (n!)</h3>
+        <p class="desc">Fórmula: n! = n × (n−1) × ... × 1</p>
+        <div class="op-row">
+          <input type="number" id="fact-n" placeholder="n (0–20)" min="0" max="20" value="5" />
+          <button onclick="calcFactorial()">Calcular</button>
+        </div>
+        <div class="result" id="fact-result"></div>
+      </div>
+
+      <!-- 2. Interés compuesto -->
+      <div class="op-block">
+        <h3>2. Interés compuesto</h3>
+        <p class="desc">Fórmula: A = P × (1 + r)ᵗ</p>
+        <div class="op-row">
+          <input type="number" id="ic-p" placeholder="Capital ($)" value="1000" />
+          <input type="number" id="ic-r" placeholder="Tasa %" value="5" />
+          <input type="number" id="ic-t" placeholder="Años" value="3" />
+          <button onclick="calcInteres()">Calcular</button>
+        </div>
+        <div class="result" id="ic-result"></div>
+      </div>
+
+      <!-- 3. Potencia -->
+      <div class="op-block">
+        <h3>3. Potencia (aⁿ)</h3>
+        <p class="desc">Fórmula: resultado = base ^ exponente</p>
+        <div class="op-row">
+          <input type="number" id="pow-a" placeholder="Base" value="2" />
+          <input type="number" id="pow-n" placeholder="Exponente" value="10" />
+          <button onclick="calcPotencia()">Calcular</button>
+        </div>
+        <div class="result" id="pow-result"></div>
+      </div>
+
+      <!-- 4. Raíz n-ésima -->
+      <div class="op-block">
+        <h3>4. Raíz n-ésima</h3>
+        <p class="desc">Fórmula: resultado = x ^ (1/n)</p>
+        <div class="op-row">
+          <input type="number" id="rt-x" placeholder="Número" value="64" />
+          <input type="number" id="rt-n" placeholder="Índice (n)" value="3" />
+          <button onclick="calcRaiz()">Calcular</button>
+        </div>
+        <div class="result" id="rt-result"></div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<script>
+  // ── Estado de la calculadora básica ──
+  let current = '0';
+  let stored  = null;
+  let op      = null;
+  let newNum  = true;
+
+  function updateDisplay(v) {
+    document.getElementById('disp').textContent = v;
+  }
+  function updateExpr(v) {
+    document.getElementById('expr').textContent = v;
+  }
+
+  function digit(d) {
+    if (newNum) {
+      current = d;
+      newNum  = false;
+    } else {
+      if (current.length < 12) {
+        current = (current === '0') ? d : current + d;
+      }
+    }
+    updateDisplay(current);
+  }
+
+  function dot() {
+    if (newNum) {
+      current = '0.';
+      newNum  = false;
+    } else if (!current.includes('.')) {
+      current += '.';
+    }
+    updateDisplay(current);
+  }
+
+  function clearAll() {
+    current = '0';
+    stored  = null;
+    op      = null;
+    newNum  = true;
+    updateDisplay('0');
+    updateExpr('');
+  }
+
+  function toggleSign() {
+    current = String(-parseFloat(current));
+    updateDisplay(current);
+  }
+
+  function percent() {
+    current = String(parseFloat(current) / 100);
+    updateDisplay(current);
+  }
+
+  function setOp(o) {
+    if (op && !newNum) calculate();
+    stored = parseFloat(current);
+    op     = o;
+    const sym = { '/': '÷', '*': '×', '-': '−', '+': '+' }[o];
+    updateExpr(stored + ' ' + sym);
+    newNum = true;
+  }
+
+  function calculate() {
+    if (!op || stored === null) return;
+    const a = stored;
+    const b = parseFloat(current);
+    let res;
+
+    switch (op) {
+      case '+': res = a + b; break;
+      case '-': res = a - b; break;
+      case '*': res = a * b; break;
+      case '/':
+        if (b === 0) { updateDisplay('Error'); updateExpr('División por cero'); stored = null; op = null; newNum = true; return; }
+        res = a / b;
+        break;
+    }
+
+    const sym = { '/': '÷', '*': '×', '-': '−', '+': '+' }[op];
+    updateExpr(a + ' ' + sym + ' ' + b + ' =');
+    current = String(parseFloat(res.toFixed(10)));
+    updateDisplay(current);
+    stored = null;
+    op     = null;
+    newNum = true;
+  }
+
+  // ── Cambio de modo ──
+  function setMode(m) {
+    const tabs = document.querySelectorAll('.mode-tab');
+    tabs[0].classList.toggle('active', m === 'basic');
+    tabs[1].classList.toggle('active', m === 'complex');
+    document.getElementById('basic-panel').classList.toggle('hidden', m !== 'basic');
+    document.getElementById('complex-panel').classList.toggle('hidden', m !== 'complex');
+  }
+
+  // ── Operaciones complejas ──
+
+  // 1. Factorial
+  function calcFactorial() {
+    const n = parseInt(document.getElementById('fact-n').value);
+    const el = document.getElementById('fact-result');
+    if (isNaN(n) || n < 0 || n > 20) {
+      el.textContent = 'Ingresa un número entre 0 y 20.';
+      el.className = 'result error';
+      return;
+    }
+    let resultado = 1;
+    for (let i = 2; i <= n; i++) resultado *= i;
+    el.textContent = n + '! = ' + resultado.toLocaleString('es-CO');
+    el.className = 'result';
+  }
+
+  // 2. Interés compuesto: A = P(1 + r)^t
+  function calcInteres() {
+    const P  = parseFloat(document.getElementById('ic-p').value);
+    const r  = parseFloat(document.getElementById('ic-r').value) / 100;
+    const t  = parseFloat(document.getElementById('ic-t').value);
+    const el = document.getElementById('ic-result');
+    if ([P, r, t].some(isNaN) || P <= 0 || t <= 0) {
+      el.textContent = 'Ingresa valores válidos y positivos.';
+      el.className = 'result error';
+      return;
+    }
+    const A       = P * Math.pow(1 + r, t);
+    const ganancia = A - P;
+    el.textContent =
+      'Monto final: $' + A.toFixed(2) +
+      ' | Ganancia: $' + ganancia.toFixed(2);
+    el.className = 'result';
+  }
+
+  // 3. Potencia: a^n
+  function calcPotencia() {
+    const a  = parseFloat(document.getElementById('pow-a').value);
+    const n  = parseFloat(document.getElementById('pow-n').value);
+    const el = document.getElementById('pow-result');
+    if (isNaN(a) || isNaN(n)) {
+      el.textContent = 'Ingresa base y exponente.';
+      el.className = 'result error';
+      return;
+    }
+    const resultado = Math.pow(a, n);
+    el.textContent = a + ' ^ ' + n + ' = ' + parseFloat(resultado.toFixed(8)).toLocaleString('es-CO');
+    el.className = 'result';
+  }
+
+  // 4. Raíz n-ésima: x^(1/n)
+  function calcRaiz() {
+    const x  = parseFloat(document.getElementById('rt-x').value);
+    const n  = parseFloat(document.getElementById('rt-n').value);
+    const el = document.getElementById('rt-result');
+    if (isNaN(x) || isNaN(n) || n === 0) {
+      el.textContent = 'Valores inválidos. El índice no puede ser 0.';
+      el.className = 'result error';
+      return;
+    }
+    if (x < 0 && n % 2 === 0) {
+      el.textContent = 'No existe raíz par de número negativo.';
+      el.className = 'result error';
+      return;
+    }
+    const resultado = Math.pow(Math.abs(x), 1 / n) * (x < 0 ? -1 : 1);
+    el.textContent = 'Raíz ' + n + ' de ' + x + ' = ' + parseFloat(resultado.toFixed(8));
+    el.className = 'result';
+  }
+</script>
+</body>
+</html>
